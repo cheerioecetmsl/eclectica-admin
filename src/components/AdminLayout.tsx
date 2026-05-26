@@ -1,9 +1,9 @@
 "use client";
-
+ 
 import React, { useState, useEffect } from "react";
 import { 
   BookOpen, LayoutDashboard, Image as ImageIcon, PenTool, 
-  Video, Settings, LogOut, Lock, AlertCircle, Sparkles, Users, BarChart2
+  Video, Settings, LogOut, Lock, AlertCircle, Sparkles, Users, BarChart2, MessageSquare
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -90,7 +90,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <NavItem href="/entries" icon={<Sparkles size={18} />} label="Competition Entries" active={pathname === "/entries"} />
           <NavItem href="/video" icon={<Video size={18} />} label="Intro Video Settings" active={pathname === "/video"} />
           <NavItem href="/polls" icon={<BarChart2 size={18} />} label="Exit Polls Studio" active={pathname === "/polls"} />
+          <NavItem href="/confessions" icon={<MessageSquare size={18} />} label="Confessions Desk" active={pathname === "/confessions"} />
           <NavItem href="/teams" icon={<Users size={18} />} label="Team Assignments" active={pathname === "/teams"} />
+          <NavItem href="/notifications" icon={<AlertCircle size={18} />} label="Notification Studio" active={pathname === "/notifications"} />
           <NavItem href="/settings" icon={<Settings size={18} />} label="Global Settings" active={pathname === "/settings"} />
         </nav>
 

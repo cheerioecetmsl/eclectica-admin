@@ -399,8 +399,8 @@ export default function UsersManagementPage() {
                       {SECTION_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
                     </Select>
                   </Field>
-                  <Field label="University Roll No.">
-                    <Input value={editForm.univRollNo} onChange={e => setEditForm({ ...editForm, univRollNo: e.target.value })} placeholder="e.g. 12345678" />
+                  <Field label="Wing/Sub Club">
+                    <Input value={editForm.univRollNo} onChange={e => setEditForm({ ...editForm, univRollNo: e.target.value })} placeholder="Moksha, Opinionists, Content, etc" />
                   </Field>
                 </div>
               </section>
