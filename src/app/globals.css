@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-brand-red: #ff4d4d;
+  --color-brand-blue: #2d5da1;
+  --color-pencil-black: #2d2d2d;
+  --color-paper-light: #fdfbf7;
+  --color-paper-warm: #fcfbf9;
+  --color-paper-muted: #e5e0d8;
+  
+  --font-serif: "Kalam", var(--font-kalam), cursive, Georgia, serif;
+  --font-sans: "Patrick Hand", var(--font-patrick-hand), sans-serif;
+  
+  --animate-jiggle: jiggle 4s ease-in-out infinite;
+  --animate-shake: shake 0.6s ease-in-out;
+}
+
+:root {
+  background-color: #fdfbf7;
+  color: #2d2d2d;
+}
+
+body {
+  background-color: #fdfbf7;
+  background-image: radial-gradient(#e5e0d8 1.5px, transparent 1.5px);
+  background-size: 24px 24px;
+  color: #2d2d2d;
+  min-height: 100vh;
+}
+
+/* Wobbly Hand-Drawn Borders */
+.wobbly-border-sm {
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+}
+
+.wobbly-border-md {
+  border-radius: 12px 24px 18px 22px / 20px 14px 22px 16px;
+}
+
+.wobbly-border-lg {
+  border-radius: 20px 8px 12px 20px / 12px 20px 20px 8px;
+}
+
+.wobbly-border {
+  border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+}
+
+/* Hard Shadows (Solid offset shadows with no blur) */
+.shadow-hard-sm {
+  box-shadow: 4px 4px 0px 0px #2d2d2d;
+}
+
+.shadow-hard-md {
+  box-shadow: 6px 6px 0px 0px #2d2d2d;
+}
+
+.shadow-hard-lg {
+  box-shadow: 9px 9px 0px 0px #2d2d2d;
+}
+
+/* Animated sketch wobbling keyframes */
+@keyframes jiggle {
+  0%, 100% { transform: rotate(-0.5deg) translateY(0px); }
+  50% { transform: rotate(0.5deg) translateY(-2px); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px) rotate(-1deg); }
+  40%, 80% { transform: translateX(6px) rotate(1deg); }
+}
+
+/* Ruled school notebook lines for signature blanks */
+.lined-notebook {
+  background-color: #fcfbf9;
+  background-image: linear-gradient(rgba(45, 93, 161, 0.09) 1px, transparent 1px);
+  background-size: 100% 28px;
+  line-height: 28px;
+}
