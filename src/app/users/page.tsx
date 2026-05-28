@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, doc, deleteDoc, updateDoc, onSnapshot } from "firebase/firestore";
-import { Users, Loader2, Trash2, ShieldAlert, CheckCircle2, TrendingUp, Edit2, X, Save, Search, Tag, ChevronDown } from "lucide-react";
+import { Users, Loader2, Trash2, ShieldAlert, CheckCircle2, TrendingUp, Edit2, X, Save, Search, Tag, ChevronDown, Camera } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 interface Archivist {
@@ -43,6 +43,61 @@ export default function UsersManagementPage() {
   const [savingEdit, setSavingEdit] = useState(false);
   const [search, setSearch] = useState("");
   const [tagInput, setTagInput] = useState("");
+
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const triggerImageUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setIsUploadingPhoto(true);
+      try {
+        const configRes = await fetch("/api/config");
+        if (!configRes.ok) throw new Error("Failed to load Cloudinary config");
+        const config = await configRes.json();
+        
+        if (!config.cloudName) {
+          alert("Cloudinary parameters are not configured in your env file!");
+          return;
+        }
+        
+        const sanitizedBatch = editForm?.year 
+          ? editForm.year.toLowerCase().replace(/[^a-z0-9]/g, "_") 
+          : "unassigned";
+        const folderPath = `${config.folder || "Eclectica"}/profiles/${sanitizedBatch}`;
+        
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", config.uploadPreset);
+        formData.append("folder", folderPath);
+        
+        const uploadRes = await fetch(
+          `https://api.cloudinary.com/v1_1/${config.cloudName}/image/upload`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+        
+        if (uploadRes.ok) {
+          const cloudData = await uploadRes.json();
+          setEditForm(prev => prev ? { ...prev, photoURL: cloudData.secure_url } : null);
+        } else {
+          const err = await uploadRes.json();
+          alert(err.error?.message || "Failed to upload photo to Cloudinary.");
+        }
+      } catch (err: any) {
+        console.error("Photo upload error:", err);
+        alert("Failed to upload image. Please try again.");
+      } finally {
+        setIsUploadingPhoto(false);
+      }
+    }
+  };
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "users"), (snap) => {
@@ -127,6 +182,7 @@ export default function UsersManagementPage() {
       const updates = {
         name: editForm.name,
         email: editForm.email,
+        photoURL: editForm.photoURL,
         xp: Number(editForm.xp) || 0,
         status: editForm.status,
         year: editForm.year,
@@ -339,7 +395,46 @@ export default function UsersManagementPage() {
             {/* Modal Header */}
             <div className="sticky top-0 bg-[#111] p-6 border-b border-zinc-800 flex items-center justify-between z-10">
               <div className="flex items-center gap-3">
-                {editForm.photoURL && <img src={editForm.photoURL} className="w-10 h-10 rounded-full object-cover border border-zinc-700" />}
+                
+                {/* Clickable Image Container */}
+                <div 
+                  onClick={triggerImageUpload}
+                  title="Click to upload/change profile picture"
+                  className="relative group w-12 h-12 rounded-full overflow-hidden border border-zinc-700 bg-zinc-900 flex-shrink-0 cursor-pointer"
+                >
+                  {editForm.photoURL ? (
+                    <img 
+                      src={editForm.photoURL} 
+                      alt={editForm.name} 
+                      className={`w-full h-full object-cover group-hover:opacity-40 transition-opacity ${
+                        isUploadingPhoto ? "opacity-20 animate-pulse" : ""
+                      }`} 
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center font-bold text-amber-500/50 text-lg">
+                      {editForm.name.charAt(0)}
+                    </div>
+                  )}
+                  {/* Hover Camera Overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 pointer-events-none">
+                    <Camera size={16} className="text-white" />
+                  </div>
+                  {/* Uploading loading overlay spinner */}
+                  {isUploadingPhoto && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+                      <Loader2 size={16} className="text-amber-500 animate-spin" />
+                    </div>
+                  )}
+                </div>
+
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleImageChange} 
+                  accept="image/*" 
+                  className="hidden" 
+                />
+
                 <div>
                   <h2 className="text-lg font-bold text-white">Editing: {editingUser.name}</h2>
                   <p className="text-zinc-500 text-xs">{editingUser.email}</p>
@@ -363,6 +458,9 @@ export default function UsersManagementPage() {
                     <Input type="email" value={editForm.email} onChange={e => setEditForm({ ...editForm, email: e.target.value })} />
                   </Field>
                 </div>
+                <Field label="Profile Photo URL">
+                  <Input value={editForm.photoURL} onChange={e => setEditForm({ ...editForm, photoURL: e.target.value })} placeholder="Cloudinary Image URL" />
+                </Field>
                 <div className="grid grid-cols-3 gap-4">
                   <Field label="Gender">
                     <Select value={editForm.gender} onChange={e => setEditForm({ ...editForm, gender: e.target.value })}>
