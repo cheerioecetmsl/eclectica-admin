@@ -23,6 +23,8 @@ interface Poll {
   type: "single" | "multiple";
   status: "open" | "closed" | "results_declared";
   options: PollOption[];
+  mediaUrl?: string;
+  mediaType?: "image" | "video" | null;
   createdAt: any;
 }
 
@@ -50,6 +52,42 @@ export default function PollsManager() {
     { id: "1", text: "", mediaUrl: "", mediaType: null },
     { id: "2", text: "", mediaUrl: "", mediaType: null }
   ]);
+
+  const [mediaUrl, setMediaUrl] = useState("");
+  const [mediaType, setMediaType] = useState<"image" | "video" | null>(null);
+  const [isUploadingQuestionMedia, setIsUploadingQuestionMedia] = useState(false);
+
+  const uploadMediaForQuestion = async (file: File, type: "image" | "video") => {
+    if (!config) return;
+    
+    setIsUploadingQuestionMedia(true);
+    setMediaType(type); // set type early to show correct loader
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", config.uploadPreset);
+    formData.append("folder", `${config.folder}/polls`);
+
+    try {
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${config.cloudName}/auto/upload`,
+        { method: "POST", body: formData }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setMediaUrl(data.secure_url);
+        setMediaType(type);
+      } else {
+        alert("Upload failed.");
+        setMediaType(null);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error uploading file.");
+      setMediaType(null);
+    } finally {
+      setIsUploadingQuestionMedia(false);
+    }
+  };
 
   useEffect(() => {
     fetchPolls();
@@ -125,6 +163,8 @@ export default function PollsManager() {
         type,
         status,
         options,
+        mediaUrl: mediaUrl || "",
+        mediaType: mediaType || null,
         createdAt: pollId ? undefined : new Date() // Don't overwrite if editing
       };
 
@@ -157,6 +197,8 @@ export default function PollsManager() {
       { id: "1", text: "", mediaUrl: "", mediaType: null },
       { id: "2", text: "", mediaUrl: "", mediaType: null }
     ]);
+    setMediaUrl("");
+    setMediaType(null);
   };
 
   const openEdit = (poll: Poll) => {
@@ -166,6 +208,8 @@ export default function PollsManager() {
     setType(poll.type);
     setStatus(poll.status);
     setOptions(poll.options);
+    setMediaUrl(poll.mediaUrl || "");
+    setMediaType(poll.mediaType || null);
     setIsCreating(true);
   };
 
@@ -239,7 +283,59 @@ export default function PollsManager() {
                   placeholder="Additional context..."
                 />
               </div>
-              
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest block">Question Media (Optional)</label>
+                {mediaUrl ? (
+                  <div className="relative w-full h-40 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden group">
+                    {mediaType === "image" ? (
+                      <img src={mediaUrl} alt="Poll question" className="w-full h-full object-cover" />
+                    ) : (
+                      <video src={mediaUrl} controls className="w-full h-full object-contain bg-black" />
+                    )}
+                    <button 
+                      type="button"
+                      onClick={() => { setMediaUrl(""); setMediaType(null); }}
+                      className="absolute top-2 right-2 p-2 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors cursor-pointer"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-4">
+                    <label className="flex-1 flex items-center justify-center gap-2 p-3 bg-zinc-900 border border-zinc-800 hover:border-amber-500/40 rounded-xl text-zinc-400 hover:text-white transition-all cursor-pointer text-xs font-bold uppercase tracking-wider">
+                      {isUploadingQuestionMedia && mediaType === "image" ? (
+                        <RefreshCw className="animate-spin w-4 h-4" />
+                      ) : (
+                        <ImageIcon size={16} />
+                      )}
+                      <span>Add Image</span>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        disabled={isUploadingQuestionMedia}
+                        onChange={(e) => e.target.files?.[0] && uploadMediaForQuestion(e.target.files[0], "image")} 
+                      />
+                    </label>
+                    <label className="flex-1 flex items-center justify-center gap-2 p-3 bg-zinc-900 border border-zinc-800 hover:border-amber-500/40 rounded-xl text-zinc-400 hover:text-white transition-all cursor-pointer text-xs font-bold uppercase tracking-wider">
+                      {isUploadingQuestionMedia && mediaType === "video" ? (
+                        <RefreshCw className="animate-spin w-4 h-4" />
+                      ) : (
+                        <Video size={16} />
+                      )}
+                      <span>Add Video</span>
+                      <input 
+                        type="file" 
+                        accept="video/*" 
+                        className="hidden" 
+                        disabled={isUploadingQuestionMedia}
+                        onChange={(e) => e.target.files?.[0] && uploadMediaForQuestion(e.target.files[0], "video")} 
+                      />
+                    </label>
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Selection Type</label>
